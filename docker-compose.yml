@@ -20,20 +20,70 @@ services:
     networks:
       - backend
 
+  redis:
+    image: redis:7-alpine
+    command: ["redis-server", "--appendonly", "yes"]
+    volumes:
+      - redisdata:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+    restart: unless-stopped
+    networks:
+      - backend
+
   app:
     build: ./app
     env_file: .env
-    ports:
-      - "${PORT}:${PORT}"
     depends_on:
       db:
+        condition: service_healthy
+      redis:
         condition: service_healthy
     restart: unless-stopped
     networks:
       - backend
 
+  nginx:
+    image: nginx:1.29-alpine
+    ports:
+      - "${PUBLIC_PORT:-8080}:80"
+    volumes:
+      - ./nginx/default.conf:/etc/nginx/conf.d/default.conf:ro
+    depends_on:
+      app:
+        condition: service_healthy
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD-SHELL", "wget -q -O /dev/null http://127.0.0.1/health || exit 1"]
+      interval: 10s
+      timeout: 3s
+      retries: 5
+      start_period: 10s
+    networks:
+      - backend
+
+  benchmark:
+    image: grafana/k6:latest
+    profiles: ["tools"]
+    environment:
+      BASE_URL: http://nginx
+      VUS: ${BENCHMARK_VUS:-20}
+      DURATION: ${BENCHMARK_DURATION:-60s}
+    volumes:
+      - ./scripts:/scripts:ro
+    command: ["run", "/scripts/benchmark.js"]
+    depends_on:
+      nginx:
+        condition: service_healthy
+    networks:
+      - backend
+
 volumes:
   pgdata:
+  redisdata:
 
 networks:
   backend:
