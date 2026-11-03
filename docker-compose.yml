@@ -72,6 +72,7 @@ services:
       BASE_URL: http://nginx
       VUS: ${BENCHMARK_VUS:-20}
       DURATION: ${BENCHMARK_DURATION:-60s}
+      THINK_TIME: ${BENCHMARK_THINK_TIME:-0.1}
     volumes:
       - ./scripts:/scripts:ro
     command: ["run", "/scripts/benchmark.js"]
@@ -80,6 +81,7 @@ services:
         condition: service_healthy
     networks:
       - backend
+
 
 volumes:
   pgdata:

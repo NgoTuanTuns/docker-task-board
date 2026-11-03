@@ -78,6 +78,8 @@ io.use((socket, next) => {
 });
 
 io.on("connection", (socket) => {
+  console.log(`socket ${socket.id} (${socket.user.email}) connected to ${os.hostname()}`);
+  socket.emit("server:hello", { host: os.hostname() });
   socket.on("board:join", (boardId) => socket.join(`board:${boardId}`));
   socket.on("board:leave", (boardId) => socket.leave(`board:${boardId}`));
 });

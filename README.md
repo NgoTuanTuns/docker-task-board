@@ -121,21 +121,21 @@ docker compose up -d --scale app=3
 
 The benchmark requests `/health` through Nginx and reports request throughput, latency (including p95), failures, and custom health checks. It does not create or modify task data.
 
-Run the single-replica measurement:
+Run the single-replica measurement. The option `--no-deps` keeps Compose from scaling `app` back to one replica before the benchmark starts:
 
 ```powershell
 docker compose up --build -d --scale app=1
-docker compose --profile tools run --rm benchmark
+docker compose --profile tools run --rm --no-deps benchmark
 ```
 
 Then run the three-replica measurement under the same machine/load conditions:
 
 ```powershell
 docker compose up -d --scale app=3
-docker compose --profile tools run --rm benchmark
+docker compose --profile tools run --rm --no-deps benchmark
 ```
 
-For a longer test, configure `BENCHMARK_VUS` and `BENCHMARK_DURATION` in `.env`, for example `BENCHMARK_VUS=40` and `BENCHMARK_DURATION=120s`. Compare `http_reqs` (throughput), `http_req_duration` (average/p95), and `http_req_failed` between runs. Repeat each run several times and report the actual output; do not assume three replicas must be faster for every workload, because the database, Redis, CPU, or local machine may become the bottleneck.
+For a longer test, configure `BENCHMARK_VUS`, `BENCHMARK_DURATION`, and `BENCHMARK_THINK_TIME` (pause between requests of one virtual user, default `0.1` s; `0` saturates the replicas) in `.env`, for example `BENCHMARK_VUS=40` and `BENCHMARK_DURATION=120s`. Compare `http_reqs` (throughput), `http_req_duration` (average/p95), and `http_req_failed` between runs. Repeat each run several times and report the actual output; do not assume three replicas must be faster for every workload, because the database, Redis, CPU, or local machine may become the bottleneck.
 
 ## Useful commands
 
