@@ -4,6 +4,7 @@ import { Counter, Trend } from 'k6/metrics';
 
 const failedChecks = new Counter('health_check_failures');
 const responseTime = new Trend('health_response_time', true);
+const thinkTime = Number(__ENV.THINK_TIME ?? 0.1);
 const baseUrl = (__ENV.BASE_URL || 'http://localhost:8080').replace(/\/$/, '');
 
 export const options = {
@@ -30,5 +31,5 @@ export default function () {
     'host is present': (r) => Boolean(r.json('host')),
   });
   if (!ok) failedChecks.add(1);
-  sleep(0.1);
+  if (thinkTime > 0) sleep(thinkTime);
 }

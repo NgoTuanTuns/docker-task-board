@@ -21,10 +21,17 @@ test('Nginx configuration supports dynamic Docker DNS and WebSocket upgrades', (
   assert.match(nginx, /proxy_http_version 1\.1/);
   assert.match(nginx, /proxy_set_header Upgrade/);
   assert.match(nginx, /proxy_set_header Connection \$connection_upgrade/);
+  assert.match(nginx, /proxy_connect_timeout 2s/);
 });
 
 test('Socket.IO Redis adapter dependencies are declared', () => {
   const pkg = JSON.parse(fs.readFileSync(path.join(root, 'app', 'package.json'), 'utf8'));
   assert.ok(pkg.dependencies['@socket.io/redis-adapter']);
   assert.ok(pkg.dependencies.redis);
+});
+
+test('Dockerfile installs exact production dependencies from the lock file', () => {
+  const dockerfile = fs.readFileSync(path.join(root, 'app', 'Dockerfile'), 'utf8');
+  assert.match(dockerfile, /npm ci --omit=dev/);
+  assert.match(dockerfile, /^USER node/m);
 });
